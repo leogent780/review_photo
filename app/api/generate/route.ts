@@ -1,10 +1,17 @@
 import { NextResponse } from 'next/server';
-import { writeFile } from 'fs/promises';
+import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import getDb from '@/lib/db';
 import { getPrompt } from '@/lib/prompts';
 import { generateImage } from '@/lib/fal';
+
+async function ensureUploadDirs() {
+  const base = path.join(process.cwd(), 'uploads');
+  for (const sub of ['references', 'products', 'generated']) {
+    await mkdir(path.join(base, sub), { recursive: true });
+  }
+}
 
 export async function POST(request: Request) {
   try {
@@ -12,6 +19,8 @@ export async function POST(request: Request) {
     const referenceFile = formData.get('reference') as File | null;
     const typeStr = formData.get('type') as string | null;
     const productId = formData.get('productId') as string | null;
+
+    await ensureUploadDirs();
 
     if (!referenceFile) {
       return NextResponse.json({ error: 'reference image is required' }, { status: 400 });

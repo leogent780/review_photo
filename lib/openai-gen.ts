@@ -69,11 +69,18 @@ export async function generateImage(options: GenerateOptions): Promise<GenerateR
       (o: { type: string }) => o.type === 'image_generation_call'
     ) as { result?: string } | undefined;
 
-    const outputBase64 = imageOutput?.result;
+    let outputBase64 = imageOutput?.result;
 
     if (!outputBase64) {
       throw new Error('이미지 생성 실패: 안전 필터에 의해 차단되었습니다.');
     }
+
+    // Strip data URL prefix if present
+    if (outputBase64.includes(',')) {
+      outputBase64 = outputBase64.split(',')[1];
+    }
+
+    console.log('[outputBase64 length]', outputBase64?.length);
 
     return {
       jobId: response.id || crypto.randomUUID(),

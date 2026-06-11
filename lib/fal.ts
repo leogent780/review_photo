@@ -35,7 +35,7 @@ export async function generateImage(options: GenerateOptions): Promise<GenerateR
   const mimeType = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
   const blob = new Blob([imageBytes], { type: mimeType });
   const uploadedUrl = await fal.storage.upload(blob);
-  console.log('[fal] uploaded:', uploadedUrl);
+  fs.writeFileSync('fal-debug.txt', `uploaded: ${uploadedUrl}\n`, { flag: 'w' });
 
   // xai/grok-imagine-image/edit — confirmed best result from fal.ai sandbox
   const result = await fal.subscribe('xai/grok-imagine-image/edit', {
@@ -45,8 +45,8 @@ export async function generateImage(options: GenerateOptions): Promise<GenerateR
     } as any,
   }) as any;
 
-  // Log full response to diagnose structure
-  console.log('[fal] full result:', JSON.stringify(result, null, 2).slice(0, 1000));
+  // Write full response to debug file
+  fs.writeFileSync('fal-debug.txt', `uploaded: ${uploadedUrl}\nresult: ${JSON.stringify(result, null, 2).slice(0, 2000)}\n`);
 
   // Try all possible URL locations in response
   const outputUrl =

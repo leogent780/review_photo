@@ -34,11 +34,20 @@ export async function generateImage(options: GenerateOptions): Promise<GenerateR
   const mimeType = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
   const dataUrl = `data:${mimeType};base64,${imageBytes.toString('base64')}`;
 
-  const result = await fal.subscribe('fal-ai/flux/dev/image-to-image', {
+  // ControlNet: extracts structure (pose/depth/edges) from original and preserves it
+  // Only appearance changes, composition/position stays exactly the same
+  const result = await fal.subscribe('fal-ai/flux-general/image-to-image', {
     input: {
       image_url: dataUrl,
       prompt: options.prompt,
-      strength: 0.15,
+      strength: 0.75,
+      controlnets: [
+        {
+          path: 'InstantX/FLUX.1-dev-Controlnet-Canny',
+          image_url: dataUrl,
+          conditioning_scale: 0.8,
+        },
+      ],
       num_images: 1,
       guidance_scale: 3.5,
     },

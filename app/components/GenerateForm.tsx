@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import ProductManager from './ProductManager';
 
 interface Product {
@@ -29,6 +29,13 @@ export default function GenerateForm({ onAllDone }: Props) {
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!running && files.length > 0 && files.some(f => f.status === 'done')) {
+      const allFinished = files.every(f => f.status === 'done' || f.status === 'error');
+      if (allFinished) onAllDone?.();
+    }
+  }, [running]);
 
   const addFiles = (newFiles: File[]) => {
     const items: FileItem[] = newFiles
@@ -88,11 +95,6 @@ export default function GenerateForm({ onAllDone }: Props) {
     }
 
     setRunning(false);
-    setFiles(prev => {
-      const succeeded = prev.filter(f => f.status === 'done').length;
-      if (succeeded > 0) onAllDone?.();
-      return prev;
-    });
   };
 
   const allDone = files.length > 0 && files.every(f => f.status === 'done' || f.status === 'error');

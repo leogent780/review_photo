@@ -88,7 +88,11 @@ export default function GenerateForm({ onAllDone }: Props) {
     }
 
     setRunning(false);
-    onAllDone?.();
+    setFiles(prev => {
+      const succeeded = prev.filter(f => f.status === 'done').length;
+      if (succeeded > 0) onAllDone?.();
+      return prev;
+    });
   };
 
   const allDone = files.length > 0 && files.every(f => f.status === 'done' || f.status === 'error');

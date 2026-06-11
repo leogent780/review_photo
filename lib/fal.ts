@@ -36,27 +36,40 @@ export async function generateImage(options: GenerateOptions): Promise<GenerateR
 
   // ControlNet: extracts structure (pose/depth/edges) from original and preserves it
   // Only appearance changes, composition/position stays exactly the same
-  const result = await fal.subscribe('fal-ai/flux-general/image-to-image', {
-    input: {
-      image_url: dataUrl,
-      prompt: options.prompt,
-      strength: 0.75,
-      controlnets: [
-        {
-          path: 'InstantX/FLUX.1-dev-Controlnet-Canny',
-          image_url: dataUrl,
-          conditioning_scale: 0.8,
-        },
-      ],
-      num_images: 1,
-      guidance_scale: 3.5,
-    },
-  }) as { data?: { images?: { url: string }[] }; requestId?: string };
+  let result: unknown;
+  try {
+    result = await fal.subscribe('fal-ai/flux-general/image-to-image', {
+      input: {
+        image_url: dataUrl,
+        prompt: options.prompt,
+        strength: 0.75,
+        controlnets: [
+          {
+            path: 'InstantX/FLUX.1-dev-Controlnet-Canny',
+            image_url: dataUrl,
+            conditioning_scale: 0.8,
+          },
+        ],
+        num_images: 1,
+        guidance_scale: 3.5,
+      },
+    });
+  } catch (e) {
+    console.error('[fal.ai error]', e);
+    throw new Error(`fal.ai 호출 실패: ${String(e)}`);
+  }
 
-  const outputUrl = result?.data?.images?.[0]?.url;
+  console.log('[fal.ai result]', JSON.stringify({
+    hasData: !!(result as any)?.data,
+    images: (result as any)?.data?.images,
+    keys: Object.keys((result as any) || {}),
+  }));
+
+  const outputUrl = (result as any)?.data?.images?.[0]?.url
+    ?? (result as any)?.images?.[0]?.url;
 
   if (!outputUrl) {
-    throw new Error('이미지 생성 실패');
+    throw new Error(`이미지 생성 실패 - 응답: ${JSON.stringify(result).slice(0, 200)}`);
   }
 
   return {

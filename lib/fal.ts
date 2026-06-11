@@ -40,17 +40,18 @@ export async function generateImage(options: GenerateOptions): Promise<GenerateR
   const uploadedUrl = await fal.storage.upload(blob);
   fs.writeFileSync('fal-debug.txt', `uploaded: ${uploadedUrl}\n`, { flag: 'w' });
 
-  // Upload only the first product image to avoid multiple products appearing
+  // Upload up to 2 product images (multiple angles of same product for better 3D understanding)
   const imageUrls: string[] = [uploadedUrl];
   if (options.productImagePaths && options.productImagePaths.length > 0) {
-    const pPath = options.productImagePaths[0];
-    const pBytes = await sharp(pPath)
-      .resize(2048, 2048, { fit: 'inside', withoutEnlargement: true })
-      .jpeg({ quality: 90 })
-      .toBuffer();
-    const pBlob = new Blob([new Uint8Array(pBytes)], { type: 'image/jpeg' });
-    const pUrl = await fal.storage.upload(pBlob);
-    imageUrls.push(pUrl);
+    for (const pPath of options.productImagePaths.slice(0, 2)) {
+      const pBytes = await sharp(pPath)
+        .resize(2048, 2048, { fit: 'inside', withoutEnlargement: true })
+        .jpeg({ quality: 90 })
+        .toBuffer();
+      const pBlob = new Blob([new Uint8Array(pBytes)], { type: 'image/jpeg' });
+      const pUrl = await fal.storage.upload(pBlob);
+      imageUrls.push(pUrl);
+    }
   }
 
   // xai/grok-imagine-image/edit — confirmed best result from fal.ai sandbox

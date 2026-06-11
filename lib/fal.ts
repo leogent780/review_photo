@@ -40,12 +40,14 @@ export async function generateImage(options: GenerateOptions): Promise<GenerateR
       strength: 0.85,
       num_images: 1,
     },
-  }) as { images?: { url: string }[]; request_id?: string };
+  }) as { data?: { images?: { url: string }[] }; requestId?: string; images?: { url: string }[] };
 
-  const outputUrl = result?.images?.[0]?.url;
+  // fal.subscribe returns { data, requestId }
+  const images = result?.data?.images ?? result?.images;
+  const outputUrl = images?.[0]?.url;
 
   return {
-    jobId: result?.request_id || crypto.randomUUID(),
+    jobId: result?.requestId || crypto.randomUUID(),
     status: 'completed',
     outputUrl,
   };

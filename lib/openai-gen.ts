@@ -57,6 +57,8 @@ export async function generateImage(options: GenerateOptions): Promise<GenerateR
     tools: [{ type: 'image_generation' }],
   });
 
+  console.log('[OpenAI Response]', JSON.stringify(response?.output?.map((o: any) => ({ type: o.type, hasResult: !!o.result })), null, 2));
+
   const imageOutput = response.output?.find(
     (o: { type: string }) => o.type === 'image_generation_call'
   ) as { result?: string } | undefined;

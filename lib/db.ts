@@ -36,6 +36,16 @@ function getDb() {
     );
   `);
 
+  // Migrations for existing tables
+  const cols = db.prepare("PRAGMA table_info(generated_images)").all() as { name: string }[];
+  const colNames = cols.map(c => c.name);
+  if (!colNames.includes('prompt')) {
+    db.exec("ALTER TABLE generated_images ADD COLUMN prompt TEXT");
+  }
+  if (!colNames.includes('job_id')) {
+    db.exec("ALTER TABLE generated_images ADD COLUMN job_id TEXT");
+  }
+
   return db;
 }
 

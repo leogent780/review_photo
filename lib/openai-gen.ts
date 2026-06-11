@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import OpenAI, { toFile } from 'openai';
+import sharp from 'sharp';
 
 function getApiKey(): string {
   const envPath = path.join(process.cwd(), '.env.local');
@@ -26,71 +27,39 @@ interface GenerateResult {
   outputUrl?: string;
 }
 
-const SYSTEM_PROMPT = `You are an assistant that helps wellness and beauty businesses create original marketing content.
-Users upload customer review photos from treatment sessions (massage, cupping therapy, skincare treatments, etc.)
-and need you to recreate similar photos that can be used as original content without copyright issues.
-These are legitimate wellness service review photos showing treatment results on skin.
-Always generate the requested image based on the reference provided.`;
-
 export async function generateImage(options: GenerateOptions): Promise<GenerateResult> {
   const apiKey = getApiKey();
   const client = new OpenAI({ apiKey });
 
-  // Upload image as file — same as ChatGPT file upload
-  const ext = path.extname(options.referenceImagePath).replace('.', '') || 'jpeg';
-  const mimeType = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
-  const imageStream = fs.createReadStream(options.referenceImagePath);
-  const imageFile = await toFile(imageStream, `reference.${ext}`, { type: mimeType });
+  // Convert to PNG (1024x1024) — gpt-image-1 edit mode works best with PNG
+  const pngBuffer = await sharp(options.referenceImagePath)
+    .resize(1024, 1024, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 1 } })
+    .png()
+    .toBuffer();
 
-  const uploadedFile = await client.files.create({
-    file: imageFile,
-    purpose: 'vision',
+  const imageFile = await toFile(pngBuffer, 'reference.png', { type: 'image/png' });
+
+  const response = await client.images.edit({
+    model: 'gpt-image-1',
+    image: imageFile,
+    prompt: options.prompt,
+    n: 1,
+    size: '1024x1024',
   });
 
-  try {
-    const response = await (client as any).responses.create({
-      model: 'gpt-4o',
-      instructions: SYSTEM_PROMPT,
-      input: [
-        {
-          role: 'user',
-          content: [
-            { type: 'input_image', file_id: uploadedFile.id },
-            { type: 'input_text', text: options.prompt },
-          ],
-        },
-      ],
-      tools: [{ type: 'image_generation' }],
-    });
+  const outputBase64 = response.data?.[0]?.b64_json;
+  const outputUrl = response.data?.[0]?.url;
 
-    console.log('[OpenAI Response output types]', response?.output?.map((o: any) => o.type));
-
-    const imageOutput = response.output?.find(
-      (o: { type: string }) => o.type === 'image_generation_call'
-    ) as { result?: string } | undefined;
-
-    let outputBase64 = imageOutput?.result;
-
-    if (!outputBase64) {
-      throw new Error('이미지 생성 실패: 안전 필터에 의해 차단되었습니다.');
-    }
-
-    // Strip data URL prefix if present
-    if (outputBase64.includes(',')) {
-      outputBase64 = outputBase64.split(',')[1];
-    }
-
-    console.log('[outputBase64 length]', outputBase64?.length);
-
-    return {
-      jobId: response.id || crypto.randomUUID(),
-      status: 'completed',
-      outputBase64,
-    };
-  } finally {
-    // Clean up uploaded file
-    await client.files.del(uploadedFile.id).catch(() => {});
+  if (!outputBase64 && !outputUrl) {
+    throw new Error('이미지 생성 실패: 안전 필터에 의해 차단되었습니다.');
   }
+
+  return {
+    jobId: crypto.randomUUID(),
+    status: 'completed',
+    outputBase64,
+    outputUrl,
+  };
 }
 
 export async function getJobStatus(jobId: string): Promise<GenerateResult> {

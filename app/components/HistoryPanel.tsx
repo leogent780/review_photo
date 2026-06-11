@@ -30,6 +30,21 @@ export default function HistoryPanel() {
     load();
   };
 
+  const handleDownloadAll = async () => {
+    const downloadable = items.filter(i => i.output_filename);
+    for (const item of downloadable) {
+      const res = await fetch(`/api/uploads?folder=generated&filename=${item.output_filename}`);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = item.output_filename;
+      a.click();
+      URL.revokeObjectURL(url);
+      await new Promise(r => setTimeout(r, 200));
+    }
+  };
+
   if (items.length === 0) {
     return <p className="text-sm text-gray-400">생성 기록이 없습니다.</p>;
   }
@@ -38,7 +53,15 @@ export default function HistoryPanel() {
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h2 className="font-bold text-lg">생성 기록</h2>
-        <p className="text-xs text-gray-400">총 {items.length}장</p>
+        <div className="flex items-center gap-2">
+          <p className="text-xs text-gray-400">총 {items.length}장</p>
+          <button
+            onClick={handleDownloadAll}
+            className="text-xs bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
+          >
+            전체 다운로드
+          </button>
+        </div>
       </div>
       <div className="space-y-4">
         {items.map(item => (

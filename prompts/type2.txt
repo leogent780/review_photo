@@ -1,3 +1,137 @@
-The additional images provided are multiple angles of the exact same single product — use them together to understand its 3D shape, color, texture, logo, and proportions. There is only one product; do not place multiple products in the output.
+1. Product Architecture
 
-Analyze the reference photo carefully: identify the exact scene context (what surface the product is on, how it is being held or used, what body part it is interacting with, the lighting, angle, background, and any physical interaction such as skin compression, pulling, or pressing). Then replace only the product in the reference image with this single product, while keeping absolutely everything else identical — same hand pose, same grip style, same physical interaction with skin or surface, same scene, same lighting, same background, same camera angle, same depth of field. The replacement product must faithfully match its actual shape, color, logo, texture, and proportions. It must appear as a real photographed object, not CGI — include subtle reflections, natural shadows, slight fingerprints, and realistic surface imperfections. Do not change the person, pose, background, lighting, or any element of the scene other than the product itself.
+The product is a single handheld consumer device with a fixed industrial design.
+
+The device consists of four connected sections arranged in a fixed order:
+
+1) Handle Section
+
+* Long vertical grip
+* Faceted geometric shape
+* Contains the display and control buttons
+
+2) Chrome Connector Section
+
+* Metallic silver chrome connector
+* Located directly between the handle and the head
+* Opaque reflective metal
+* Not transparent
+* Not plastic
+* Not glass
+
+3) Main Head Section
+
+* Large faceted geometric head
+* Wider than the handle
+* Permanently connected to the chrome connector
+
+4) Suction Cup Section
+
+* Circular suction surface
+* Located at the bottom of the head
+* Directly contacts the skin
+
+The handle must always connect to the head through the chrome connector.
+
+The suction cup must always remain attached to the bottom of the head.
+
+The device must never contain multiple heads.
+
+The device must never contain multiple suction cups.
+
+The device must never be split into separate objects.
+
+The device must remain a single complete product with one handle, one head, one chrome connector, and one suction cup.
+
+
+2. Product Constraints
+
+The device contains exactly:
+
+* one handle
+* one chrome connector
+* one main head
+* one suction cup
+
+The device must never contain:
+
+* multiple heads
+* multiple suction cups
+* multiple handle sections
+* secondary massage heads
+* secondary suction modules
+* duplicate product components
+
+The suction cup exists only on the bottom of the main head.
+
+No additional suction cup may appear anywhere else on the device.
+
+No additional head may appear anywhere else on the device.
+
+The device is not double-sided.
+
+The device is not modular.
+
+The device is not composed of multiple connected massage units.
+
+The device must remain a single complete product matching the structure shown in the second image.
+
+
+3. Product Topology
+
+The suction cup is the lowest and final part of the device.
+
+No product structure exists beneath the suction cup.
+
+No material, extension, support, base, platform, connector, or additional component may appear below the suction cup.
+
+The suction cup defines the bottom-most boundary of the product.
+
+The outer silhouette of the product must remain identical to the second image.
+
+Do not generate any geometry outside the product silhouette shown in the second image.
+
+
+4. Product Understanding
+
+The product shown in the second image is a single complete handheld suction gua sha massage device.
+
+The device is one physically connected consumer product and must remain a single complete object.
+
+Do not separate, duplicate, recreate, extend, or independently generate any part of the device.
+
+The device uses suction and massage to physically interact with the skin.
+
+When the suction head contacts the skin, the skin may naturally compress, deform, lift, stretch, or show pressure marks.
+
+The device should appear physically connected to the skin rather than simply resting on its surface.
+
+The second image defines only the appearance of the device.
+
+5. Context Understanding
+
+Analyze the first image and identify how the original product is being used.
+
+The first image defines the composition, camera angle, framing, lighting, environment, pose, interaction, contact points, pressure, and physical relationships.
+
+Preserve the original action, contact, pressure, compression, deformation, reflections, shadows, depth, and environmental lighting shown in the first image.
+
+The replacement product must occupy the exact same location and maintain the same physical interaction as the original product.
+
+The original product must not appear in the final image.
+
+The original product must be completely replaced by the product shown in the second image.
+
+Only the role, interaction, and physical relationship of the original product should be preserved.
+
+The original product itself must be removed.
+
+After replacement, only the new product should remain visible.
+
+No shape, color, structure, component, or visible element of the original product may remain in the final image.
+
+The original product and the replacement product must never appear together.
+
+Inherit the role, not the object.
+
+Remove the original product and replace it entirely with the product shown in the second image.

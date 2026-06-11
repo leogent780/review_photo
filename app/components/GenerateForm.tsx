@@ -158,8 +158,9 @@ export default function GenerateForm({ onAllDone }: Props) {
                 </div>
               )}
               {item.status === 'error' && (
-                <div className="absolute inset-0 bg-red-500/70 flex items-center justify-center">
-                  <p className="text-white text-xs px-1 text-center">실패</p>
+                <div className="absolute inset-0 bg-red-500/80 flex flex-col items-center justify-center p-1">
+                  <p className="text-white text-sm font-bold">⚠ 실패</p>
+                  {item.error && <p className="text-white text-xs text-center mt-1 leading-tight">{item.error.replace('Error: ', '')}</p>}
                 </div>
               )}
               {item.status === 'waiting' && !running && (

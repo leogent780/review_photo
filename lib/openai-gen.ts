@@ -54,6 +54,11 @@ export async function generateImage(options: GenerateOptions): Promise<GenerateR
     throw new Error('이미지 생성 실패: 안전 필터에 의해 차단되었습니다.');
   }
 
+  // Black image check — valid 1024x1024 PNG is at least 50KB base64
+  if (outputBase64 && outputBase64.length < 10000) {
+    throw new Error('이미지 생성 실패: 안전 필터에 의해 차단되었습니다.');
+  }
+
   return {
     jobId: crypto.randomUUID(),
     status: 'completed',

@@ -55,12 +55,21 @@ export async function generateImage(options: GenerateOptions): Promise<GenerateR
   }
 
   // xai/grok-imagine-image/edit — confirmed best result from fal.ai sandbox
-  const result = await fal.subscribe('xai/grok-imagine-image/edit', {
-    input: {
-      image_urls: imageUrls,
-      prompt: options.prompt,
-    } as any,
-  }) as any;
+  fs.writeFileSync('fal-debug.txt', `uploaded: ${uploadedUrl}\nimage_urls: ${JSON.stringify(imageUrls)}\nprompt_length: ${options.prompt.length}\nprompt: ${options.prompt.slice(0, 500)}\n`, { flag: 'w' });
+
+  let result: any;
+  try {
+    result = await fal.subscribe('xai/grok-imagine-image/edit', {
+      input: {
+        image_urls: imageUrls,
+        prompt: options.prompt,
+      } as any,
+    });
+  } catch (e: any) {
+    const detail = e?.body ? JSON.stringify(e.body) : e?.message ?? String(e);
+    fs.writeFileSync('fal-debug.txt', `uploaded: ${uploadedUrl}\nerror: ${detail}\n`);
+    throw new Error(detail);
+  }
 
   // Write full response to debug file
   fs.writeFileSync('fal-debug.txt', `uploaded: ${uploadedUrl}\nresult: ${JSON.stringify(result, null, 2).slice(0, 2000)}\n`);

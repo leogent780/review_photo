@@ -4,7 +4,7 @@ import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import getDb from '@/lib/db';
 import { getPrompt } from '@/lib/prompts';
-import { generateImage } from '@/lib/fal';
+import { generateImage } from '@/lib/higgsfield';
 
 export async function POST(request: Request) {
   try {
@@ -52,11 +52,7 @@ export async function POST(request: Request) {
 
     // Save output image
     let outputFilename = '';
-    if (result.outputBase64) {
-      outputFilename = `${uuidv4()}.png`;
-      const outputPath = path.join(process.cwd(), 'uploads', 'generated', outputFilename);
-      await writeFile(outputPath, Buffer.from(result.outputBase64, 'base64'));
-    } else if (result.outputUrl) {
+    if (result.outputUrl) {
       outputFilename = `${uuidv4()}.jpg`;
       const outputPath = path.join(process.cwd(), 'uploads', 'generated', outputFilename);
       const imgResp = await fetch(result.outputUrl);

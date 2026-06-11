@@ -29,7 +29,7 @@ export async function generateImage(options: GenerateOptions): Promise<GenerateR
   const apiKey = getApiKey();
   fal.config({ credentials: apiKey });
 
-  // Upload image to fal.ai storage first
+  // Upload image to fal.ai storage
   const imageBytes = fs.readFileSync(options.referenceImagePath);
   const ext = path.extname(options.referenceImagePath).slice(1).toLowerCase() || 'jpeg';
   const mimeType = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
@@ -37,29 +37,32 @@ export async function generateImage(options: GenerateOptions): Promise<GenerateR
   const uploadedUrl = await fal.storage.upload(blob);
   console.log('[fal] uploaded:', uploadedUrl);
 
-  // fal-ai/flux-pro/kontext — true image editing model (image→image)
-  const result = await fal.subscribe('fal-ai/flux-pro/kontext', {
+  // xai/grok-imagine-image/edit — confirmed best result from fal.ai sandbox
+  const result = await fal.subscribe('xai/grok-imagine-image/edit', {
     input: {
-      image_url: uploadedUrl,
+      image_urls: [uploadedUrl],
       prompt: options.prompt,
-      num_images: 1,
-      safety_tolerance: '6',
-      output_format: 'jpeg',
-    },
+    } as any,
   }) as any;
 
-  console.log('[fal kontext result]', JSON.stringify({
-    images: result?.data?.images,
-    keys: Object.keys(result || {}),
-  }));
+  // Log full response to diagnose structure
+  console.log('[fal] full result:', JSON.stringify(result, null, 2).slice(0, 1000));
 
-  const outputUrl = result?.data?.images?.[0]?.url ?? result?.images?.[0]?.url;
+  // Try all possible URL locations in response
+  const outputUrl =
+    result?.data?.images?.[0]?.url ??
+    result?.data?.image?.url ??
+    result?.data?.output?.[0] ??
+    result?.images?.[0]?.url ??
+    result?.image?.url ??
+    result?.output?.[0];
+
   if (!outputUrl) {
-    throw new Error(`이미지 생성 실패 — 응답: ${JSON.stringify(result).slice(0, 200)}`);
+    throw new Error(`이미지 URL 없음 — 응답: ${JSON.stringify(result).slice(0, 500)}`);
   }
 
   return {
-    jobId: result?.requestId || crypto.randomUUID(),
+    jobId: result?.requestId || result?.data?.request_id || crypto.randomUUID(),
     status: 'completed',
     outputUrl,
   };

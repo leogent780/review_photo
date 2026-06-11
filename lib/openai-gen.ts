@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import OpenAI from 'openai';
+import OpenAI, { toFile } from 'openai';
 
 function getApiKey(): string {
   const envPath = path.join(process.cwd(), '.env.local');
@@ -30,38 +30,28 @@ export async function generateImage(options: GenerateOptions): Promise<GenerateR
   const apiKey = getApiKey();
   const client = new OpenAI({ apiKey });
 
-  const imageBytes = fs.readFileSync(options.referenceImagePath);
-  const base64Image = imageBytes.toString('base64');
+  const imageStream = fs.createReadStream(options.referenceImagePath);
   const ext = path.extname(options.referenceImagePath).replace('.', '') || 'jpeg';
   const mimeType = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
-  const dataUrl = `data:${mimeType};base64,${base64Image}`;
 
-  // Use responses API with image generation tool — same pipeline as ChatGPT
-  const response = await client.responses.create({
-    model: 'gpt-4o',
-    input: [
-      {
-        role: 'user',
-        content: [
-          { type: 'input_image', image_url: dataUrl },
-          { type: 'input_text', text: options.prompt },
-        ],
-      },
-    ],
-    tools: [{ type: 'image_generation' }],
+  const imageFile = await toFile(imageStream, `reference.${ext}`, { type: mimeType });
+
+  const response = await client.images.edit({
+    model: 'gpt-image-1',
+    image: imageFile,
+    prompt: options.prompt,
+    n: 1,
+    size: '1024x1024',
   });
 
-  // Extract image from response
-  const imageOutput = response.output?.find(
-    (o: { type: string }) => o.type === 'image_generation_call'
-  ) as { result?: string } | undefined;
-
-  const outputBase64 = imageOutput?.result;
+  const outputBase64 = response.data?.[0]?.b64_json;
+  const outputUrl = response.data?.[0]?.url;
 
   return {
-    jobId: response.id || crypto.randomUUID(),
+    jobId: crypto.randomUUID(),
     status: 'completed',
     outputBase64,
+    outputUrl,
   };
 }
 

@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import OpenAI from 'openai';
+import OpenAI, { toFile } from 'openai';
 
 function getApiKey(): string {
   const envPath = path.join(process.cwd(), '.env.local');
@@ -36,44 +36,54 @@ export async function generateImage(options: GenerateOptions): Promise<GenerateR
   const apiKey = getApiKey();
   const client = new OpenAI({ apiKey });
 
-  const imageBytes = fs.readFileSync(options.referenceImagePath);
-  const base64Image = imageBytes.toString('base64');
+  // Upload image as file — same as ChatGPT file upload
   const ext = path.extname(options.referenceImagePath).replace('.', '') || 'jpeg';
   const mimeType = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
-  const dataUrl = `data:${mimeType};base64,${base64Image}`;
+  const imageStream = fs.createReadStream(options.referenceImagePath);
+  const imageFile = await toFile(imageStream, `reference.${ext}`, { type: mimeType });
 
-  const response = await (client as any).responses.create({
-    model: 'gpt-4o',
-    instructions: SYSTEM_PROMPT,
-    input: [
-      {
-        role: 'user',
-        content: [
-          { type: 'input_image', image_url: dataUrl },
-          { type: 'input_text', text: options.prompt },
-        ],
-      },
-    ],
-    tools: [{ type: 'image_generation' }],
+  const uploadedFile = await client.files.create({
+    file: imageFile,
+    purpose: 'vision',
   });
 
-  console.log('[OpenAI Response]', JSON.stringify(response?.output?.map((o: any) => ({ type: o.type, hasResult: !!o.result })), null, 2));
+  try {
+    const response = await (client as any).responses.create({
+      model: 'gpt-4o',
+      instructions: SYSTEM_PROMPT,
+      input: [
+        {
+          role: 'user',
+          content: [
+            { type: 'input_image', file_id: uploadedFile.id },
+            { type: 'input_text', text: options.prompt },
+          ],
+        },
+      ],
+      tools: [{ type: 'image_generation' }],
+    });
 
-  const imageOutput = response.output?.find(
-    (o: { type: string }) => o.type === 'image_generation_call'
-  ) as { result?: string } | undefined;
+    console.log('[OpenAI Response output types]', response?.output?.map((o: any) => o.type));
 
-  const outputBase64 = imageOutput?.result;
+    const imageOutput = response.output?.find(
+      (o: { type: string }) => o.type === 'image_generation_call'
+    ) as { result?: string } | undefined;
 
-  if (!outputBase64) {
-    throw new Error('이미지 생성 실패: 안전 필터에 의해 차단되었습니다. 프롬프트나 이미지를 변경해보세요.');
+    const outputBase64 = imageOutput?.result;
+
+    if (!outputBase64) {
+      throw new Error('이미지 생성 실패: 안전 필터에 의해 차단되었습니다.');
+    }
+
+    return {
+      jobId: response.id || crypto.randomUUID(),
+      status: 'completed',
+      outputBase64,
+    };
+  } finally {
+    // Clean up uploaded file
+    await client.files.del(uploadedFile.id).catch(() => {});
   }
-
-  return {
-    jobId: response.id || crypto.randomUUID(),
-    status: 'completed',
-    outputBase64,
-  };
 }
 
 export async function getJobStatus(jobId: string): Promise<GenerateResult> {

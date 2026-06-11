@@ -47,6 +47,10 @@ export async function generateImage(options: GenerateOptions): Promise<GenerateR
   const outputBase64 = response.data?.[0]?.b64_json;
   const outputUrl = response.data?.[0]?.url;
 
+  if (!outputBase64 && !outputUrl) {
+    throw new Error('이미지 생성 실패: OpenAI 안전 필터에 의해 차단되었습니다. 다른 이미지를 시도해주세요.');
+  }
+
   return {
     jobId: crypto.randomUUID(),
     status: 'completed',

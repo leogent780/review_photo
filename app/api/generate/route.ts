@@ -4,7 +4,7 @@ import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import getDb from '@/lib/db';
 import { getPrompt } from '@/lib/prompts';
-import { generateImage } from '@/lib/higgsfield';
+import { generateImage } from '@/lib/fal';
 
 export async function POST(request: Request) {
   try {

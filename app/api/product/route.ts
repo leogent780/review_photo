@@ -50,8 +50,8 @@ export async function POST(request: Request) {
 
     const productId = result.lastInsertRowid;
 
-    // Save all files to product_image_files (skip first — already saved as representative)
-    for (const file of files.slice(1)) {
+    // Save all files to product_image_files
+    for (const file of files) {
       const ext = file.name.split('.').pop() || 'jpg';
       const filename = `${uuidv4()}.${ext}`;
       const filePath = path.join(PRODUCTS_DIR, filename);

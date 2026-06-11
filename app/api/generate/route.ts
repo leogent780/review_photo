@@ -74,11 +74,17 @@ export async function POST(request: Request) {
     // Save output image
     let outputFilename = '';
     if (result.outputUrl) {
-      outputFilename = `${uuidv4()}.jpg`;
-      const outputPath = path.join(process.cwd(), 'uploads', 'generated', outputFilename);
-      const imgResp = await fetch(result.outputUrl);
-      const imgBytes = await imgResp.arrayBuffer();
-      await writeFile(outputPath, Buffer.from(imgBytes));
+      try {
+        outputFilename = `${uuidv4()}.jpg`;
+        const outputPath = path.join(process.cwd(), 'uploads', 'generated', outputFilename);
+        const imgResp = await fetch(result.outputUrl);
+        if (!imgResp.ok) throw new Error(`fetch failed: ${imgResp.status}`);
+        const imgBytes = await imgResp.arrayBuffer();
+        await writeFile(outputPath, Buffer.from(imgBytes));
+      } catch (saveErr) {
+        console.error('output save error:', saveErr);
+        outputFilename = '';
+      }
     }
 
     const db = getDb();

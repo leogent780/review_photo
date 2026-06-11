@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fal } from '@fal-ai/client';
+import sharp from 'sharp';
 
 function getApiKey(): string {
   const envPath = path.join(process.cwd(), '.env.local');
@@ -29,11 +30,12 @@ export async function generateImage(options: GenerateOptions): Promise<GenerateR
   const apiKey = getApiKey();
   fal.config({ credentials: apiKey });
 
-  // Upload image to fal.ai storage
-  const imageBytes = fs.readFileSync(options.referenceImagePath);
-  const ext = path.extname(options.referenceImagePath).slice(1).toLowerCase() || 'jpeg';
-  const mimeType = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
-  const blob = new Blob([imageBytes], { type: mimeType });
+  // Resize to max 2048px and convert to JPEG to avoid 422 validation errors
+  const resizedBytes = await sharp(options.referenceImagePath)
+    .resize(2048, 2048, { fit: 'inside', withoutEnlargement: true })
+    .jpeg({ quality: 90 })
+    .toBuffer();
+  const blob = new Blob([new Uint8Array(resizedBytes)], { type: 'image/jpeg' });
   const uploadedUrl = await fal.storage.upload(blob);
   fs.writeFileSync('fal-debug.txt', `uploaded: ${uploadedUrl}\n`, { flag: 'w' });
 

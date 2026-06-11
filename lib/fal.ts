@@ -37,12 +37,14 @@ export async function generateImage(options: GenerateOptions): Promise<GenerateR
   const uploadedUrl = await fal.storage.upload(blob);
   console.log('[fal] uploaded:', uploadedUrl);
 
-  // openai/gpt-image-2/edit via fal.ai — best reference fidelity in dashboard tests
-  const result = await fal.subscribe('openai/gpt-image-2/edit', {
+  // fal-ai/gpt-image-1/edit-image — official fal.ai endpoint with image_urls support
+  const result = await fal.subscribe('fal-ai/gpt-image-1/edit-image', {
     input: {
       image_urls: [uploadedUrl],
       prompt: options.prompt,
-    } as any,
+      input_fidelity: 'high',
+      num_images: 1,
+    },
   }) as any;
 
   console.log('[fal kontext result]', JSON.stringify({

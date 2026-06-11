@@ -1,0 +1,12 @@
+Transform this reference review image into a new, original image that shows the results of using a beauty/skincare product.
+
+Requirements:
+- Remove any visible brand logos, watermarks, or identifying marks from the original
+- Maintain the same overall aesthetic, lighting, and composition style
+- Keep the same type of result being shown (skin texture, hair style, etc.)
+- Make it look like a natural, authentic user review photo
+- The person and setting should look different from the original but convey the same message
+- Style: natural, candid, authentic user-generated content look
+- High quality, realistic photo output
+
+The output should be usable as an original review image without copyright concerns.

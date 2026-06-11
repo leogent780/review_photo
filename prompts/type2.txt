@@ -1,0 +1,13 @@
+Transform this reference review image into a new, original image showing someone using or holding a product.
+
+Requirements:
+- Replace any visible product in the reference image with the provided product image
+- Keep the same hand position, grip style, and usage context
+- Maintain similar lighting, background, and composition
+- Remove original brand logos or watermarks
+- The person and overall scene should look natural and authentic
+- The replacement product should look naturally held/used, not composited
+- Style: natural, candid, authentic user-generated content look
+- High quality, realistic photo output
+
+The output should feature our product being used/held in the same natural way as the reference.

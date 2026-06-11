@@ -41,10 +41,10 @@ export default function ProductManager({ onSelect, selectedId }: Props) {
   };
 
   const handleUpload = async () => {
-    if (selectedFiles.length === 0 || !name.trim()) return;
+    if (selectedFiles.length === 0) return;
     setUploading(true);
     const fd = new FormData();
-    fd.append('name', name.trim());
+    fd.append('name', name.trim() || `제품 ${new Date().toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric' })}`);
     for (const f of selectedFiles) fd.append('files', f);
     const res = await fetch('/api/product', { method: 'POST', body: fd });
     const created = await res.json();

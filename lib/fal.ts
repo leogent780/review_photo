@@ -37,7 +37,7 @@ export async function generateImage(options: GenerateOptions): Promise<GenerateR
     input: {
       image_url: referenceDataUrl,
       prompt: options.prompt,
-      strength: 0.85,
+      strength: 0.35,
       num_images: 1,
     },
   }) as { data?: { images?: { url: string }[] }; requestId?: string; images?: { url: string }[] };

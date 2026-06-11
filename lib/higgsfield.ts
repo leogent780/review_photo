@@ -1,7 +1,8 @@
 import fs from 'fs';
 import path from 'path';
 import { HiggsfieldClient } from '@higgsfield/client';
-import { higgsfield as hf, config } from '@higgsfield/client/v2';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { SoulQuality, SoulSize, BatchSize } = require('@higgsfield/client/dist/helpers');
 
 function getCredentials(): { keyId: string; keySecret: string } {
   const envPath = path.join(process.cwd(), '.env.local');
@@ -35,43 +36,45 @@ interface GenerateResult {
 
 export async function generateImage(options: GenerateOptions): Promise<GenerateResult> {
   const { keyId, keySecret } = getCredentials();
+  const client = new HiggsfieldClient({ apiKey: keyId, apiSecret: keySecret });
 
-  // Upload image using v1 client
-  const v1Client = new HiggsfieldClient({ apiKey: keyId, apiSecret: keySecret });
+  // Upload reference image to Higgsfield CDN
   const imageBuffer = fs.readFileSync(options.referenceImagePath);
   const ext = path.extname(options.referenceImagePath).slice(1).toLowerCase();
   const format = (ext === 'png' ? 'png' : ext === 'webp' ? 'webp' : 'jpeg') as 'jpeg' | 'png' | 'webp';
-  const uploadedUrl = await v1Client.uploadImage(imageBuffer, format);
+  const uploadedUrl = await client.uploadImage(imageBuffer, format);
+  console.log('[higgsfield] uploaded reference:', uploadedUrl);
 
-  // Configure v2 client
-  config({ credentials: `${keyId}:${keySecret}` });
-
-  // Use FLUX Kontext for image editing (accepts image_url for reference)
-  const result = await hf.subscribe('flux-pro/kontext/max/text-to-image', {
-    input: {
-      prompt: options.prompt,
+  // Use Soul text-to-image with image_reference for composition guidance
+  const jobSet = await client.generate('/v1/text2image/soul', {
+    prompt: options.prompt,
+    width_and_height: SoulSize.PORTRAIT_1536x2048,
+    quality: SoulQuality.HD,
+    batch_size: BatchSize.SINGLE,
+    image_reference: {
+      type: 'image_url',
       image_url: uploadedUrl,
-      aspect_ratio: '1:1',
-      safety_tolerance: 6,
     },
-    withPolling: true,
-  });
+  }, { withPolling: true });
 
   console.log('[higgsfield result]', JSON.stringify({
-    status: result.status,
-    request_id: result.request_id,
-    images: result.images,
+    isCompleted: jobSet.isCompleted,
+    isFailed: jobSet.isFailed,
+    jobCount: jobSet.jobs?.length,
+    jobs: jobSet.jobs?.map((j: any) => ({ status: j.status, url: j.results?.raw?.url })),
   }));
 
-  if (result.status !== 'completed') {
-    throw new Error(`Higgsfield 생성 실패: ${result.status}`);
+  if (!jobSet.isCompleted) {
+    throw new Error(`Higgsfield 생성 실패: ${JSON.stringify(jobSet)}`);
   }
 
-  const outputUrl = result.images?.[0]?.url;
+  const outputUrl = jobSet.jobs?.[0]?.results?.raw?.url
+    ?? jobSet.jobs?.[0]?.results?.min?.url;
+
   if (!outputUrl) throw new Error('Higgsfield: 결과 URL 없음');
 
   return {
-    jobId: result.request_id || crypto.randomUUID(),
+    jobId: jobSet.id || crypto.randomUUID(),
     status: 'completed',
     outputUrl,
   };

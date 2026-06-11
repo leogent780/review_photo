@@ -1,1 +1,16 @@
-Keep the exact same photo composition, person, body part, skin condition, lighting, and background. Only make subtle changes to make it look like a different original photo: slightly adjust the skin tone, change minor background details, and alter the overall color grading just enough so it appears to be a different photo. Do not add or remove any skin conditions. Do not change the pose or body position. The result must look like a natural, authentic user review photo taken by a different person in a similar situation.
+You are editing a review photo. Prioritize reference fidelity over creativity.
+
+Keep the following exactly the same as the original:
+- The person's body position and pose
+- The skin condition, texture, and affected area shown
+- The overall composition and framing
+- The lighting direction and intensity
+- The clothing and background setting
+
+Only make these minimal changes:
+- Slightly adjust the overall color temperature or grading
+- Make subtle changes to background details (wall texture, shadows)
+- Alter the skin tone slightly to appear as a different individual
+- Remove any visible watermarks or brand identifiers
+
+The output must look like an authentic, natural user-generated review photo. Do not add anything that was not in the original. Do not change the skin condition being shown.

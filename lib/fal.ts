@@ -33,12 +33,13 @@ export async function generateImage(options: GenerateOptions): Promise<GenerateR
 
   const referenceDataUrl = `data:image/jpeg;base64,${options.referenceImageBase64}`;
 
-  const result = await fal.subscribe('fal-ai/flux/dev/image-to-image', {
+  const result = await fal.subscribe('fal-ai/flux-pro/kontext', {
     input: {
       image_url: referenceDataUrl,
       prompt: options.prompt,
-      strength: 0.35,
       num_images: 1,
+      guidance_scale: 2.5,
+      safety_tolerance: 5,
     },
   }) as { data?: { images?: { url: string }[] }; requestId?: string; images?: { url: string }[] };
 

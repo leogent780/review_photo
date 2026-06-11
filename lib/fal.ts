@@ -18,6 +18,7 @@ function getApiKey(): string {
 interface GenerateOptions {
   referenceImagePath: string;
   prompt: string;
+  productImagePaths?: string[];
 }
 
 interface GenerateResult {
@@ -39,10 +40,24 @@ export async function generateImage(options: GenerateOptions): Promise<GenerateR
   const uploadedUrl = await fal.storage.upload(blob);
   fs.writeFileSync('fal-debug.txt', `uploaded: ${uploadedUrl}\n`, { flag: 'w' });
 
+  // Upload product images and add to image_urls (max 3 total)
+  const imageUrls: string[] = [uploadedUrl];
+  if (options.productImagePaths && options.productImagePaths.length > 0) {
+    for (const pPath of options.productImagePaths.slice(0, 2)) {
+      const pBytes = await sharp(pPath)
+        .resize(2048, 2048, { fit: 'inside', withoutEnlargement: true })
+        .jpeg({ quality: 90 })
+        .toBuffer();
+      const pBlob = new Blob([new Uint8Array(pBytes)], { type: 'image/jpeg' });
+      const pUrl = await fal.storage.upload(pBlob);
+      imageUrls.push(pUrl);
+    }
+  }
+
   // xai/grok-imagine-image/edit — confirmed best result from fal.ai sandbox
   const result = await fal.subscribe('xai/grok-imagine-image/edit', {
     input: {
-      image_urls: [uploadedUrl],
+      image_urls: imageUrls,
       prompt: options.prompt,
     } as any,
   }) as any;

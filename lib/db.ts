@@ -22,6 +22,14 @@ function getDb() {
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
+    CREATE TABLE IF NOT EXISTS product_image_files (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      product_id INTEGER NOT NULL,
+      filename TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (product_id) REFERENCES product_images(id) ON DELETE CASCADE
+    );
+
     CREATE TABLE IF NOT EXISTS generated_images (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       type INTEGER NOT NULL,

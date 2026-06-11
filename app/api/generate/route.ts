@@ -36,19 +36,31 @@ export async function POST(request: Request) {
 
     const prompt = getPrompt(type);
     let productImageIdNum: number | null = null;
+    let productImagePaths: string[] = [];
 
     if (type === 2 && productId) {
       const db = getDb();
       const product = db.prepare('SELECT * FROM product_images WHERE id = ?').get(productId) as
-        | { id: number }
+        | { id: number; filename: string }
         | undefined;
       if (!product) {
         return NextResponse.json({ error: 'Product image not found' }, { status: 404 });
       }
       productImageIdNum = product.id;
+
+      // Get all product image files
+      const files = db.prepare(
+        'SELECT filename FROM product_image_files WHERE product_id = ? ORDER BY created_at ASC LIMIT 3'
+      ).all(productId) as { filename: string }[];
+
+      if (files.length > 0) {
+        productImagePaths = files.map(f => path.join(process.cwd(), 'uploads', 'products', f.filename));
+      } else {
+        productImagePaths = [path.join(process.cwd(), 'uploads', 'products', product.filename)];
+      }
     }
 
-    const result = await generateImage({ referenceImagePath: refPath, prompt });
+    const result = await generateImage({ referenceImagePath: refPath, prompt, productImagePaths });
 
     // Save output image
     let outputFilename = '';

@@ -17,7 +17,6 @@ interface Props {
 
 export default function ProductManager({ onSelect, selectedId }: Props) {
   const [products, setProducts] = useState<Product[]>([]);
-  const [name, setName] = useState('');
   const [uploading, setUploading] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -44,11 +43,10 @@ export default function ProductManager({ onSelect, selectedId }: Props) {
     if (selectedFiles.length === 0) return;
     setUploading(true);
     const fd = new FormData();
-    fd.append('name', name.trim() || `제품 ${new Date().toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric' })}`);
+    fd.append('name', `제품 ${new Date().toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric' })}`);
     for (const f of selectedFiles) fd.append('files', f);
     const res = await fetch('/api/product', { method: 'POST', body: fd });
     const created = await res.json();
-    setName('');
     setSelectedFiles([]);
     if (fileRef.current) fileRef.current.value = '';
     setUploading(false);
@@ -71,22 +69,13 @@ export default function ProductManager({ onSelect, selectedId }: Props) {
   return (
     <div className="space-y-3">
       <h3 className="font-semibold text-sm text-gray-700">제품 이미지 등록</h3>
-      <div className="flex gap-2">
-        <input
-          type="text"
-          placeholder="제품명"
-          value={name}
-          onChange={e => setName(e.target.value)}
-          className="border rounded px-2 py-1 text-sm flex-1 min-w-0"
-        />
-        <button
-          onClick={handleUpload}
-          disabled={uploading || selectedFiles.length === 0 || !name.trim()}
-          className="bg-blue-600 text-white rounded px-3 py-1 text-sm whitespace-nowrap hover:bg-blue-700 disabled:opacity-50"
-        >
-          {uploading ? '업로드 중...' : '등록'}
-        </button>
-      </div>
+      <button
+        onClick={handleUpload}
+        disabled={uploading || selectedFiles.length === 0}
+        className="w-full bg-blue-600 text-white rounded px-3 py-1 text-sm hover:bg-blue-700 disabled:opacity-50"
+      >
+        {uploading ? '업로드 중...' : '등록'}
+      </button>
       <div
         onDrop={handleDrop}
         onDragOver={e => e.preventDefault()}

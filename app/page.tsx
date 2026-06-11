@@ -9,6 +9,12 @@ type Tab = 'generate' | 'history' | 'prompts';
 
 export default function Home() {
   const [tab, setTab] = useState<Tab>('generate');
+  const [historyKey, setHistoryKey] = useState(0);
+
+  const switchTab = (t: Tab) => {
+    if (t === 'history') setHistoryKey(k => k + 1);
+    setTab(t);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -28,7 +34,7 @@ export default function Home() {
           ] as { id: Tab; label: string }[]).map(t => (
             <button
               key={t.id}
-              onClick={() => setTab(t.id)}
+              onClick={() => switchTab(t.id)}
               className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
                 tab === t.id
                   ? 'border-blue-500 text-blue-600'
@@ -42,8 +48,8 @@ export default function Home() {
       </nav>
 
       <main className="max-w-3xl mx-auto px-4 py-6">
-        {tab === 'generate' && <GenerateForm onAllDone={() => setTab('history')} />}
-        {tab === 'history' && <HistoryPanel />}
+        {tab === 'generate' && <GenerateForm onAllDone={() => switchTab('history')} />}
+        {tab === 'history' && <HistoryPanel key={historyKey} />}
         {tab === 'prompts' && <PromptEditor />}
       </main>
     </div>

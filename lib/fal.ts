@@ -15,9 +15,8 @@ function getApiKey(): string {
 }
 
 interface GenerateOptions {
-  referenceImageBase64: string;
+  referenceImagePath: string;
   prompt: string;
-  productImageBase64?: string;
 }
 
 interface GenerateResult {
@@ -28,24 +27,28 @@ interface GenerateResult {
 
 export async function generateImage(options: GenerateOptions): Promise<GenerateResult> {
   const apiKey = getApiKey();
-
   fal.config({ credentials: apiKey });
 
-  const referenceDataUrl = `data:image/jpeg;base64,${options.referenceImageBase64}`;
+  const imageBytes = fs.readFileSync(options.referenceImagePath);
+  const ext = path.extname(options.referenceImagePath).replace('.', '') || 'jpeg';
+  const mimeType = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
+  const dataUrl = `data:${mimeType};base64,${imageBytes.toString('base64')}`;
 
   const result = await fal.subscribe('fal-ai/flux-pro/kontext', {
     input: {
-      image_url: referenceDataUrl,
+      image_url: dataUrl,
       prompt: options.prompt,
-      num_images: 1,
       guidance_scale: 2.5,
+      num_images: 1,
       safety_tolerance: 5,
     },
-  }) as { data?: { images?: { url: string }[] }; requestId?: string; images?: { url: string }[] };
+  }) as { data?: { images?: { url: string }[] }; requestId?: string };
 
-  // fal.subscribe returns { data, requestId }
-  const images = result?.data?.images ?? result?.images;
-  const outputUrl = images?.[0]?.url;
+  const outputUrl = result?.data?.images?.[0]?.url;
+
+  if (!outputUrl) {
+    throw new Error('이미지 생성 실패');
+  }
 
   return {
     jobId: result?.requestId || crypto.randomUUID(),

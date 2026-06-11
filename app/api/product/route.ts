@@ -50,8 +50,8 @@ export async function POST(request: Request) {
 
     const productId = result.lastInsertRowid;
 
-    // Save all files to product_image_files
-    for (const file of files) {
+    // Save all files to product_image_files (skip first — already saved as representative)
+    for (const file of files.slice(1)) {
       const ext = file.name.split('.').pop() || 'jpg';
       const filename = `${uuidv4()}.${ext}`;
       const filePath = path.join(PRODUCTS_DIR, filename);
@@ -71,7 +71,21 @@ export async function DELETE(request: Request) {
     const id = searchParams.get('id');
     if (!id) return NextResponse.json({ error: 'id is required' }, { status: 400 });
 
+    const { unlink } = await import('fs/promises');
     const db = getDb();
+
+    // Delete all product_image_files from disk
+    const fileRows = db.prepare('SELECT filename FROM product_image_files WHERE product_id = ?').all(id) as { filename: string }[];
+    for (const row of fileRows) {
+      await unlink(path.join(PRODUCTS_DIR, row.filename)).catch(() => {});
+    }
+
+    // Delete the representative filename from disk
+    const product = db.prepare('SELECT filename FROM product_images WHERE id = ?').get(id) as { filename: string } | undefined;
+    if (product) {
+      await unlink(path.join(PRODUCTS_DIR, product.filename)).catch(() => {});
+    }
+
     db.prepare('DELETE FROM product_image_files WHERE product_id = ?').run(id);
     db.prepare('DELETE FROM product_images WHERE id = ?').run(id);
     return NextResponse.json({ success: true });

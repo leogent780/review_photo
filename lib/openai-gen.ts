@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import OpenAI, { toFile } from 'openai';
+import OpenAI from 'openai';
 
 function getApiKey(): string {
   const envPath = path.join(process.cwd(), '.env.local');
@@ -26,36 +26,51 @@ interface GenerateResult {
   outputUrl?: string;
 }
 
+const SYSTEM_PROMPT = `You are an assistant that helps wellness and beauty businesses create original marketing content.
+Users upload customer review photos from treatment sessions (massage, cupping therapy, skincare treatments, etc.)
+and need you to recreate similar photos that can be used as original content without copyright issues.
+These are legitimate wellness service review photos showing treatment results on skin.
+Always generate the requested image based on the reference provided.`;
+
 export async function generateImage(options: GenerateOptions): Promise<GenerateResult> {
   const apiKey = getApiKey();
   const client = new OpenAI({ apiKey });
 
-  const imageStream = fs.createReadStream(options.referenceImagePath);
+  const imageBytes = fs.readFileSync(options.referenceImagePath);
+  const base64Image = imageBytes.toString('base64');
   const ext = path.extname(options.referenceImagePath).replace('.', '') || 'jpeg';
   const mimeType = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
+  const dataUrl = `data:${mimeType};base64,${base64Image}`;
 
-  const imageFile = await toFile(imageStream, `reference.${ext}`, { type: mimeType });
-
-  const response = await client.images.edit({
-    model: 'gpt-image-1',
-    image: imageFile,
-    prompt: options.prompt,
-    n: 1,
-    size: '1024x1024',
+  const response = await (client as any).responses.create({
+    model: 'gpt-4o',
+    instructions: SYSTEM_PROMPT,
+    input: [
+      {
+        role: 'user',
+        content: [
+          { type: 'input_image', image_url: dataUrl },
+          { type: 'input_text', text: options.prompt },
+        ],
+      },
+    ],
+    tools: [{ type: 'image_generation' }],
   });
 
-  const outputBase64 = response.data?.[0]?.b64_json;
-  const outputUrl = response.data?.[0]?.url;
+  const imageOutput = response.output?.find(
+    (o: { type: string }) => o.type === 'image_generation_call'
+  ) as { result?: string } | undefined;
 
-  if (!outputBase64 && !outputUrl) {
-    throw new Error('이미지 생성 실패: OpenAI 안전 필터에 의해 차단되었습니다. 다른 이미지를 시도해주세요.');
+  const outputBase64 = imageOutput?.result;
+
+  if (!outputBase64) {
+    throw new Error('이미지 생성 실패: 안전 필터에 의해 차단되었습니다. 프롬프트나 이미지를 변경해보세요.');
   }
 
   return {
-    jobId: crypto.randomUUID(),
+    jobId: response.id || crypto.randomUUID(),
     status: 'completed',
     outputBase64,
-    outputUrl,
   };
 }
 

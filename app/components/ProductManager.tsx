@@ -34,6 +34,12 @@ export default function ProductManager({ onSelect, selectedId }: Props) {
     if (e.target.files) setSelectedFiles(Array.from(e.target.files));
   };
 
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+    if (files.length > 0) setSelectedFiles(prev => [...prev, ...files]);
+  };
+
   const handleUpload = async () => {
     if (selectedFiles.length === 0 || !name.trim()) return;
     setUploading(true);
@@ -66,13 +72,6 @@ export default function ProductManager({ onSelect, selectedId }: Props) {
           className="border rounded px-2 py-1 text-sm flex-1 min-w-0"
         />
         <button
-          onClick={() => fileRef.current?.click()}
-          className="border rounded px-2 py-1 text-sm whitespace-nowrap bg-gray-50 hover:bg-gray-100"
-        >
-          {selectedFiles.length > 0 ? `${selectedFiles.length}장 선택됨` : '파일 선택'}
-        </button>
-        <input type="file" ref={fileRef} accept="image/*" multiple className="hidden" onChange={handleFileChange} />
-        <button
           onClick={handleUpload}
           disabled={uploading || selectedFiles.length === 0 || !name.trim()}
           className="bg-blue-600 text-white rounded px-3 py-1 text-sm whitespace-nowrap hover:bg-blue-700 disabled:opacity-50"
@@ -80,7 +79,29 @@ export default function ProductManager({ onSelect, selectedId }: Props) {
           {uploading ? '업로드 중...' : '등록'}
         </button>
       </div>
-      <p className="text-xs text-gray-400">여러 장 선택할수록 생성 품질이 올라가요 (최대 3장 권장)</p>
+      <div
+        onDrop={handleDrop}
+        onDragOver={e => e.preventDefault()}
+        onClick={() => fileRef.current?.click()}
+        className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-blue-400 transition-colors"
+      >
+        {selectedFiles.length > 0 ? (
+          <div className="space-y-1">
+            <div className="flex gap-2 justify-center flex-wrap">
+              {selectedFiles.map((f, i) => (
+                <img key={i} src={URL.createObjectURL(f)} alt="" className="w-12 h-12 object-cover rounded" />
+              ))}
+            </div>
+            <p className="text-xs text-blue-600">{selectedFiles.length}장 선택됨</p>
+          </div>
+        ) : (
+          <>
+            <p className="text-sm text-gray-400">이미지를 드래그하거나 클릭해서 업로드</p>
+            <p className="text-xs text-gray-400 mt-1">여러 장 선택할수록 생성 품질↑ (최대 3장 권장)</p>
+          </>
+        )}
+      </div>
+      <input type="file" ref={fileRef} accept="image/*" multiple className="hidden" onChange={handleFileChange} />
 
       {products.length === 0 ? (
         <p className="text-xs text-gray-400">등록된 제품 이미지가 없습니다.</p>

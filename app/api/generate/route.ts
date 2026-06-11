@@ -102,3 +102,32 @@ export async function GET() {
     return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 });
+
+    const db = getDb();
+    const row = db.prepare('SELECT * FROM generated_images WHERE id = ?').get(id) as
+      | { reference_filename: string; output_filename: string }
+      | undefined;
+
+    if (row) {
+      // Delete files
+      const { unlink } = await import('fs/promises');
+      const refPath = path.join(process.cwd(), 'uploads', 'references', row.reference_filename);
+      const outPath = row.output_filename
+        ? path.join(process.cwd(), 'uploads', 'generated', row.output_filename)
+        : null;
+      await unlink(refPath).catch(() => {});
+      if (outPath) await unlink(outPath).catch(() => {});
+      db.prepare('DELETE FROM generated_images WHERE id = ?').run(id);
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return NextResponse.json({ error: String(error) }, { status: 500 });
+  }
+}

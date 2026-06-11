@@ -37,8 +37,8 @@ export async function generateImage(options: GenerateOptions): Promise<GenerateR
   const uploadedUrl = await fal.storage.upload(blob);
   console.log('[fal] uploaded:', uploadedUrl);
 
-  // nano-banana-2/edit — fal.ai Edit Image model, best for reference-preserving edits
-  const result = await fal.subscribe('fal-ai/nano-banana-2/edit', {
+  // xai/grok-imagine-image/edit — confirmed working endpoint from fal.ai dashboard
+  const result = await fal.subscribe('xai/grok-imagine-image/edit', {
     input: {
       image_urls: [uploadedUrl],
       prompt: options.prompt,

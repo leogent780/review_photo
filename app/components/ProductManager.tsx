@@ -61,7 +61,6 @@ export default function ProductManager({ onSelect, selectedId }: Props) {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('삭제할까요?')) return;
     await fetch(`/api/product?id=${id}`, { method: 'DELETE' });
     load();
   };

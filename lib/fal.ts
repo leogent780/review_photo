@@ -38,20 +38,14 @@ export async function generateImage(options: GenerateOptions): Promise<GenerateR
   // Only appearance changes, composition/position stays exactly the same
   let result: unknown;
   try {
-    result = await fal.subscribe('fal-ai/flux-general/image-to-image', {
+    result = await fal.subscribe('fal-ai/flux-pro/v1/canny-finetuned', {
       input: {
-        image_url: dataUrl,
+        control_image_url: dataUrl,
         prompt: options.prompt,
-        strength: 0.75,
-        controlnets: [
-          {
-            path: 'InstantX/FLUX.1-dev-Controlnet-Canny',
-            image_url: dataUrl,
-            conditioning_scale: 0.8,
-          },
-        ],
         num_images: 1,
-        guidance_scale: 3.5,
+        guidance_scale: 30,
+        num_inference_steps: 28,
+        safety_tolerance: 5,
       },
     });
   } catch (e) {

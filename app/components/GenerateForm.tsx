@@ -127,7 +127,7 @@ export default function GenerateForm({ onAllDone }: Props) {
 
       {/* Upload area */}
       <div>
-        <h3 className="font-semibold mb-2">레퍼런스 이미지 <span className="text-gray-400 font-normal text-sm">(여러 장 가능)</span></h3>
+        <h3 className="font-semibold mb-2">레퍼런스 이미지</h3>
         <div
           onDrop={handleDrop}
           onDragOver={e => e.preventDefault()}
@@ -135,7 +135,7 @@ export default function GenerateForm({ onAllDone }: Props) {
           className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-400 transition-colors"
         >
           <p className="text-sm text-gray-400">이미지를 드래그하거나 클릭해서 업로드</p>
-          <p className="text-xs text-gray-400 mt-1">여러 장 한꺼번에 선택 가능 · JPG, PNG, WEBP</p>
+          <p className="text-xs text-gray-400 mt-1">JPG, PNG, WEBP</p>
         </div>
         <input type="file" ref={fileRef} accept="image/*" multiple className="hidden" onChange={handleFileInput} />
       </div>

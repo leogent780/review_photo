@@ -46,12 +46,20 @@ export default function ProductManager({ onSelect, selectedId }: Props) {
     const fd = new FormData();
     fd.append('name', name.trim());
     for (const f of selectedFiles) fd.append('files', f);
-    await fetch('/api/product', { method: 'POST', body: fd });
+    const res = await fetch('/api/product', { method: 'POST', body: fd });
+    const created = await res.json();
     setName('');
     setSelectedFiles([]);
     if (fileRef.current) fileRef.current.value = '';
     setUploading(false);
-    load();
+    await load();
+    // Auto-select the newly registered product
+    if (created.id && onSelect) {
+      const allRes = await fetch('/api/product');
+      const all = await allRes.json();
+      const found = all.find((p: Product) => p.id === created.id);
+      if (found) onSelect(found);
+    }
   };
 
   const handleDelete = async (id: number) => {

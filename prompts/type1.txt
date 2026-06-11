@@ -1,16 +1,1 @@
-You are editing a review photo. Prioritize reference fidelity over creativity.
-
-Keep the following exactly the same as the original:
-- The person's body position and pose
-- The skin condition, texture, and affected area shown
-- The overall composition and framing
-- The lighting direction and intensity
-- The clothing and background setting
-
-Only make these minimal changes:
-- Slightly adjust the overall color temperature or grading
-- Make subtle changes to background details (wall texture, shadows)
-- Alter the skin tone slightly to appear as a different individual
-- Remove any visible watermarks or brand identifiers
-
-The output must look like an authentic, natural user-generated review photo. Do not add anything that was not in the original. Do not change the skin condition being shown.
+Use the uploaded image as the primary visual reference. Recreate the same customer review photo with very high similarity. Preserve the original composition, camera angle, framing, posture, body position, lighting, environment, and visible treatment marks. Keep the redness, massage marks, suction marks, and skin reactions in similar locations and intensity. Maintain the same review-photo feeling and smartphone photography style. Apply only subtle natural variations such as minor differences in skin texture, body shape, clothing details, hair details, lighting variations, and treatment mark patterns. The result should look like a different customer's photo of the same experience. Authentic user-generated content. Highly realistic. Not commercial photography. Very high reference fidelity.

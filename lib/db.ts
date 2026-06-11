@@ -26,9 +26,10 @@ function getDb() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       type INTEGER NOT NULL,
       reference_filename TEXT NOT NULL,
-      output_filename TEXT NOT NULL,
+      output_filename TEXT NOT NULL DEFAULT '',
       product_image_id INTEGER,
-      higgsfield_job_id TEXT,
+      job_id TEXT,
+      prompt TEXT,
       status TEXT NOT NULL DEFAULT 'pending',
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       FOREIGN KEY (product_image_id) REFERENCES product_images(id)

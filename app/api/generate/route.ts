@@ -26,20 +26,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'productId is required for type 2' }, { status: 400 });
     }
 
-    // Save reference image
     const refExt = referenceFile.name.split('.').pop() || 'jpg';
     const refFilename = `${uuidv4()}.${refExt}`;
     const refPath = path.join(process.cwd(), 'uploads', 'references', refFilename);
     const refBytes = await referenceFile.arrayBuffer();
     await writeFile(refPath, Buffer.from(refBytes));
 
-    // Get prompt
     const prompt = getPrompt(type);
-
-    // Get reference image as base64
     const refBase64 = Buffer.from(refBytes).toString('base64');
 
-    // Get product image as base64 if type 2
     let productImageBase64: string | undefined;
     let productImageIdNum: number | null = null;
 
@@ -56,18 +51,15 @@ export async function POST(request: Request) {
       productImageIdNum = product.id;
     }
 
-    // Call Higgsfield API
     const result = await generateImage({
       referenceImageBase64: refBase64,
       prompt,
       productImageBase64,
     });
 
-    // Save to DB
     const outputFilename = result.outputUrl ? `${uuidv4()}.jpg` : '';
     const db = getDb();
 
-    // If we have an immediate output URL, download it
     if (result.outputUrl && outputFilename) {
       const outputPath = path.join(process.cwd(), 'uploads', 'generated', outputFilename);
       const imgResp = await fetch(result.outputUrl);
@@ -77,14 +69,15 @@ export async function POST(request: Request) {
 
     db.prepare(
       `INSERT INTO generated_images
-       (type, reference_filename, output_filename, product_image_id, higgsfield_job_id, status)
-       VALUES (?, ?, ?, ?, ?, ?)`
+       (type, reference_filename, output_filename, product_image_id, job_id, prompt, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
     ).run(
       type,
       refFilename,
       outputFilename,
       productImageIdNum,
       result.jobId,
+      prompt,
       result.status === 'completed' ? 'completed' : 'pending'
     );
 
@@ -98,45 +91,13 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url);
-    const jobId = searchParams.get('jobId');
-
-    if (!jobId) {
-      const db = getDb();
-      const items = db
-        .prepare('SELECT * FROM generated_images ORDER BY created_at DESC LIMIT 50')
-        .all();
-      return NextResponse.json(items);
-    }
-
-    // Poll job status
-    const { getJobStatus } = await import('@/lib/fal');
-    const result = await getJobStatus(jobId);
-
-    if (result.status === 'completed' && result.outputUrl) {
-      const db = getDb();
-      const row = db
-        .prepare('SELECT * FROM generated_images WHERE higgsfield_job_id = ?')
-        .get(jobId) as { id: number; output_filename: string } | undefined;
-
-      if (row && !row.output_filename) {
-        const outputFilename = `${uuidv4()}.jpg`;
-        const outputPath = path.join(process.cwd(), 'uploads', 'generated', outputFilename);
-        const imgResp = await fetch(result.outputUrl);
-        const imgBytes = await imgResp.arrayBuffer();
-        await writeFile(outputPath, Buffer.from(imgBytes));
-
-        db.prepare(
-          'UPDATE generated_images SET status = ?, output_filename = ? WHERE id = ?'
-        ).run('completed', outputFilename, row.id);
-
-        return NextResponse.json({ status: 'completed', outputFilename });
-      }
-    }
-
-    return NextResponse.json({ status: result.status, outputUrl: result.outputUrl });
+    const db = getDb();
+    const items = db
+      .prepare('SELECT * FROM generated_images ORDER BY created_at DESC LIMIT 100')
+      .all();
+    return NextResponse.json(items);
   } catch (error) {
     return NextResponse.json({ error: String(error) }, { status: 500 });
   }

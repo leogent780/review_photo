@@ -10,92 +10,89 @@ interface Product {
   created_at: string;
 }
 
-interface GeneratedResult {
-  jobId: string;
-  status: string;
+interface FileItem {
+  file: File;
+  preview: string;
+  status: 'waiting' | 'generating' | 'done' | 'error';
   outputFilename?: string;
+  error?: string;
 }
 
-export default function GenerateForm() {
+interface Props {
+  onAllDone?: () => void;
+}
+
+export default function GenerateForm({ onAllDone }: Props) {
   const [type, setType] = useState<1 | 2>(1);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
-  const [referenceFile, setReferenceFile] = useState<File | null>(null);
-  const [referencePreview, setReferencePreview] = useState<string | null>(null);
-  const [generating, setGenerating] = useState(false);
-  const [result, setResult] = useState<GeneratedResult | null>(null);
-  const [polling, setPolling] = useState(false);
+  const [files, setFiles] = useState<FileItem[]>([]);
+  const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (file: File | null) => {
-    setReferenceFile(file);
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setReferencePreview(url);
-    } else {
-      setReferencePreview(null);
-    }
+  const addFiles = (newFiles: File[]) => {
+    const items: FileItem[] = newFiles
+      .filter(f => f.type.startsWith('image/'))
+      .map(f => ({
+        file: f,
+        preview: URL.createObjectURL(f),
+        status: 'waiting',
+      }));
+    setFiles(prev => [...prev, ...items]);
   };
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (file && file.type.startsWith('image/')) {
-      handleFileChange(file);
-    }
+    addFiles(Array.from(e.dataTransfer.files));
   }, []);
 
-  const pollStatus = async (jobId: string) => {
-    setPolling(true);
-    const interval = setInterval(async () => {
-      const res = await fetch(`/api/generate?jobId=${jobId}`);
-      const data = await res.json();
-      if (data.status === 'completed') {
-        clearInterval(interval);
-        setPolling(false);
-        setResult(prev => prev ? { ...prev, status: 'completed', outputFilename: data.outputFilename } : null);
-      } else if (data.status === 'failed') {
-        clearInterval(interval);
-        setPolling(false);
-        setError('생성 실패. 다시 시도해주세요.');
-      }
-    }, 3000);
+  const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) addFiles(Array.from(e.target.files));
+  };
+
+  const removeFile = (idx: number) => {
+    setFiles(prev => prev.filter((_, i) => i !== idx));
   };
 
   const handleGenerate = async () => {
-    if (!referenceFile) { setError('레퍼런스 이미지를 선택해주세요.'); return; }
+    if (files.length === 0) { setError('이미지를 선택해주세요.'); return; }
     if (type === 2 && !selectedProduct) { setError('제품 이미지를 선택해주세요.'); return; }
-
     setError(null);
-    setGenerating(true);
-    setResult(null);
+    setRunning(true);
 
-    const fd = new FormData();
-    fd.append('reference', referenceFile);
-    fd.append('type', String(type));
-    if (type === 2 && selectedProduct) {
-      fd.append('productId', String(selectedProduct.id));
-    }
+    for (let i = 0; i < files.length; i++) {
+      const item = files[i];
+      if (item.status === 'done') continue;
 
-    try {
-      const res = await fetch('/api/generate', { method: 'POST', body: fd });
-      const data = await res.json();
+      setFiles(prev => prev.map((f, idx) => idx === i ? { ...f, status: 'generating' } : f));
 
-      if (!res.ok) {
-        setError(data.error || '오류가 발생했습니다.');
-        return;
+      const fd = new FormData();
+      fd.append('reference', item.file);
+      fd.append('type', String(type));
+      if (type === 2 && selectedProduct) {
+        fd.append('productId', String(selectedProduct.id));
       }
 
-      setResult(data);
-      if (data.status !== 'completed') {
-        pollStatus(data.jobId);
+      try {
+        const res = await fetch('/api/generate', { method: 'POST', body: fd });
+        const data = await res.json();
+
+        if (!res.ok) {
+          setFiles(prev => prev.map((f, idx) => idx === i ? { ...f, status: 'error', error: data.error } : f));
+        } else {
+          setFiles(prev => prev.map((f, idx) => idx === i ? { ...f, status: 'done', outputFilename: data.outputFilename } : f));
+        }
+      } catch (e) {
+        setFiles(prev => prev.map((f, idx) => idx === i ? { ...f, status: 'error', error: String(e) } : f));
       }
-    } catch (e) {
-      setError(String(e));
-    } finally {
-      setGenerating(false);
     }
+
+    setRunning(false);
+    onAllDone?.();
   };
+
+  const allDone = files.length > 0 && files.every(f => f.status === 'done' || f.status === 'error');
+  const doneCount = files.filter(f => f.status === 'done').length;
 
   return (
     <div className="space-y-6">
@@ -113,9 +110,7 @@ export default function GenerateForm() {
             >
               <p className="font-semibold text-sm">타입 {t}</p>
               <p className="text-xs text-gray-600 mt-1">
-                {t === 1
-                  ? '제품 없이 사용 결과만 나오는 이미지\n(피부, 헤어 결과 등)'
-                  : '제품을 들고 있거나 사용 중인 이미지'}
+                {t === 1 ? '제품 없이 사용 결과만 나오는 이미지 (피부, 헤어 결과 등)' : '제품을 들고 있거나 사용 중인 이미지'}
               </p>
             </button>
           ))}
@@ -125,82 +120,89 @@ export default function GenerateForm() {
       {/* Product selection for type 2 */}
       {type === 2 && (
         <div className="border rounded-lg p-4 bg-gray-50">
-          <ProductManager
-            onSelect={p => setSelectedProduct(p)}
-            selectedId={selectedProduct?.id}
-          />
-          {selectedProduct && (
-            <p className="text-xs text-blue-600 mt-2">✓ 선택된 제품: {selectedProduct.name}</p>
-          )}
+          <ProductManager onSelect={p => setSelectedProduct(p)} selectedId={selectedProduct?.id} />
+          {selectedProduct && <p className="text-xs text-blue-600 mt-2">✓ 선택된 제품: {selectedProduct.name}</p>}
         </div>
       )}
 
-      {/* Reference image upload */}
+      {/* Upload area */}
       <div>
-        <h3 className="font-semibold mb-2">레퍼런스 이미지</h3>
+        <h3 className="font-semibold mb-2">레퍼런스 이미지 <span className="text-gray-400 font-normal text-sm">(여러 장 가능)</span></h3>
         <div
           onDrop={handleDrop}
           onDragOver={e => e.preventDefault()}
           onClick={() => fileRef.current?.click()}
           className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-400 transition-colors"
         >
-          {referencePreview ? (
-            <img src={referencePreview} alt="reference" className="max-h-48 mx-auto rounded" />
-          ) : (
-            <div className="text-gray-400">
-              <p className="text-sm">이미지를 드래그하거나 클릭해서 업로드</p>
-              <p className="text-xs mt-1">JPG, PNG, WEBP 지원</p>
-            </div>
-          )}
+          <p className="text-sm text-gray-400">이미지를 드래그하거나 클릭해서 업로드</p>
+          <p className="text-xs text-gray-400 mt-1">여러 장 한꺼번에 선택 가능 · JPG, PNG, WEBP</p>
         </div>
-        <input
-          type="file"
-          ref={fileRef}
-          accept="image/*"
-          className="hidden"
-          onChange={e => handleFileChange(e.target.files?.[0] || null)}
-        />
-        {referenceFile && (
-          <p className="text-xs text-gray-500 mt-1">{referenceFile.name}</p>
-        )}
+        <input type="file" ref={fileRef} accept="image/*" multiple className="hidden" onChange={handleFileInput} />
       </div>
 
-      {error && (
-        <p className="text-red-500 text-sm bg-red-50 border border-red-200 rounded p-2">{error}</p>
+      {/* File list */}
+      {files.length > 0 && (
+        <div className="grid grid-cols-3 gap-3">
+          {files.map((item, idx) => (
+            <div key={idx} className="relative border rounded-lg overflow-hidden">
+              <img src={item.preview} alt="" className="w-full h-24 object-cover" />
+              {/* Status overlay */}
+              {item.status === 'generating' && (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                  <p className="text-white text-xs">생성 중...</p>
+                </div>
+              )}
+              {item.status === 'done' && (
+                <div className="absolute inset-0 bg-green-500/70 flex items-center justify-center">
+                  <p className="text-white text-lg">✓</p>
+                </div>
+              )}
+              {item.status === 'error' && (
+                <div className="absolute inset-0 bg-red-500/70 flex items-center justify-center">
+                  <p className="text-white text-xs px-1 text-center">실패</p>
+                </div>
+              )}
+              {item.status === 'waiting' && !running && (
+                <button
+                  onClick={() => removeFile(idx)}
+                  className="absolute top-1 right-1 bg-black/50 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center"
+                >✕</button>
+              )}
+            </div>
+          ))}
+        </div>
       )}
+
+      {/* Progress */}
+      {running && (
+        <div className="bg-blue-50 border border-blue-200 rounded p-3">
+          <p className="text-sm text-blue-700">
+            생성 중... {doneCount} / {files.length} 완료
+          </p>
+          <div className="mt-2 bg-blue-200 rounded-full h-2">
+            <div
+              className="bg-blue-600 h-2 rounded-full transition-all"
+              style={{ width: `${(doneCount / files.length) * 100}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+      {allDone && (
+        <div className="bg-green-50 border border-green-200 rounded p-3">
+          <p className="text-sm text-green-700">✓ 전체 완료! {doneCount}장 생성됨 → 생성 기록 탭으로 이동됩니다.</p>
+        </div>
+      )}
+
+      {error && <p className="text-red-500 text-sm bg-red-50 border border-red-200 rounded p-2">{error}</p>}
 
       <button
         onClick={handleGenerate}
-        disabled={generating || polling}
+        disabled={running || files.length === 0}
         className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
       >
-        {generating ? '요청 중...' : polling ? '생성 중... (잠시 기다려주세요)' : '이미지 생성'}
+        {running ? `생성 중... (${doneCount}/${files.length})` : `이미지 생성 ${files.length > 0 ? `(${files.length}장)` : ''}`}
       </button>
-
-      {/* Result */}
-      {result && (
-        <div className="border rounded-lg p-4 bg-green-50">
-          <h3 className="font-semibold text-green-800 mb-2">
-            {result.status === 'completed' ? '✓ 생성 완료' : '⏳ 생성 중...'}
-          </h3>
-          {result.outputFilename && (
-            <div className="space-y-2">
-              <img
-                src={`/api/uploads?folder=generated&filename=${result.outputFilename}`}
-                alt="generated"
-                className="max-h-64 rounded border"
-              />
-              <a
-                href={`/api/uploads?folder=generated&filename=${result.outputFilename}`}
-                download
-                className="inline-block bg-green-600 text-white text-sm px-4 py-2 rounded hover:bg-green-700"
-              >
-                다운로드
-              </a>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }

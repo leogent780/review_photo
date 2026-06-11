@@ -42,7 +42,7 @@ export default function Home() {
       </nav>
 
       <main className="max-w-3xl mx-auto px-4 py-6">
-        {tab === 'generate' && <GenerateForm />}
+        {tab === 'generate' && <GenerateForm onAllDone={() => setTab('history')} />}
         {tab === 'history' && <HistoryPanel />}
         {tab === 'prompts' && <PromptEditor />}
       </main>

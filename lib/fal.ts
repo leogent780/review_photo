@@ -37,17 +37,16 @@ export async function generateImage(options: GenerateOptions): Promise<GenerateR
   const uploadedUrl = await fal.storage.upload(blob);
   console.log('[fal] uploaded:', uploadedUrl);
 
-  // FLUX Kontext Max — true image editing model (image→image)
-  // image_urls is the correct runtime param per fal.ai dashboard (SDK types lag behind)
-  const result = await fal.subscribe('fal-ai/flux-pro/kontext/max', {
+  // FLUX Kontext — true image editing model (image→image)
+  const result = await fal.subscribe('fal-ai/flux-pro/kontext', {
     input: {
-      image_urls: [uploadedUrl],
+      image_url: uploadedUrl,
       prompt: options.prompt,
       guidance_scale: 3.5,
       num_images: 1,
       safety_tolerance: '6',
       output_format: 'jpeg',
-    } as any,
+    },
   }) as any;
 
   console.log('[fal kontext result]', JSON.stringify({

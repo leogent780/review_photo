@@ -4,7 +4,7 @@ import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import getDb from '@/lib/db';
 import { getPrompt } from '@/lib/prompts';
-import { generateImage } from '@/lib/higgsfield';
+import { generateImage } from '@/lib/fal';
 
 export async function POST(request: Request) {
   try {
@@ -112,7 +112,7 @@ export async function GET(request: Request) {
     }
 
     // Poll job status
-    const { getJobStatus } = await import('@/lib/higgsfield');
+    const { getJobStatus } = await import('@/lib/fal');
     const result = await getJobStatus(jobId);
 
     if (result.status === 'completed' && result.outputUrl) {

@@ -89,6 +89,8 @@ export async function DELETE(request: Request) {
     db.prepare('DELETE FROM product_images WHERE id = ?').run(id);
     return NextResponse.json({ success: true });
   } catch (error) {
+    const fs = await import('fs');
+    fs.default.writeFileSync('product-delete-error.txt', String(error) + '\n' + (error instanceof Error ? error.stack : ''));
     return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }

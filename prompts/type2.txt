@@ -1,5 +1,137 @@
-The additional images show multiple angles of the same single product. Use them to understand its complete 3D shape, color, logo, texture, and proportions. There is exactly one product — do not place multiple products in the output.
+1. Product Architecture
 
-The product in the second image is a single handheld beauty device consisting of four permanently connected sections in this order: a faceted grip handle with display and buttons, a short chrome metallic connector, a wide geometric applicator head, and a circular contact tip at the base of the head. The device is rigid and non-modular. Its overall silhouette, proportions, and structure must match the second image exactly.
+The product is a single handheld consumer device with a fixed industrial design.
 
-Analyze the first image: identify the scene, environment, lighting, camera angle, and how the original product is positioned and used. Then replace the original product entirely with the product from the second image, placing it in the exact same position, orientation, and usage context as the original. The replacement product must maintain the same physical relationship with the surrounding scene as the original product did. Remove the original product completely — no part of it should remain visible. Only the new product should appear. Do not alter the person, hands, background, lighting, or any other element of the scene.
+The device consists of four connected sections arranged in a fixed order:
+
+1) Handle Section
+
+* Long vertical grip
+* Faceted geometric shape
+* Contains the display and control buttons
+
+2) Chrome Connector Section
+
+* Metallic silver chrome connector
+* Located directly between the handle and the head
+* Opaque reflective metal
+* Not transparent
+* Not plastic
+* Not glass
+
+3) Main Head Section
+
+* Large faceted geometric head
+* Wider than the handle
+* Permanently connected to the chrome connector
+
+4) Applicator Tip Section
+
+* Circular contact surface
+* Located at the bottom of the head
+* Directly contacts the surface area
+
+The handle must always connect to the head through the chrome connector.
+
+The applicator tip must always remain attached to the bottom of the head.
+
+The device must never contain multiple heads.
+
+The device must never contain multiple applicator tips.
+
+The device must never be split into separate objects.
+
+The device must remain a single complete product with one handle, one head, one chrome connector, and one applicator tip.
+
+
+2. Product Constraints
+
+The device contains exactly:
+
+* one handle
+* one chrome connector
+* one main head
+* one applicator tip
+
+The device must never contain:
+
+* multiple heads
+* multiple applicator tips
+* multiple handle sections
+* secondary massage heads
+* secondary applicator modules
+* duplicate product components
+
+The applicator tip exists only on the bottom of the main head.
+
+No additional applicator tip may appear anywhere else on the device.
+
+No additional head may appear anywhere else on the device.
+
+The device is not double-sided.
+
+The device is not modular.
+
+The device is not composed of multiple connected massage units.
+
+The device must remain a single complete product matching the structure shown in the second image.
+
+
+3. Product Topology
+
+The applicator tip is the lowest and final part of the device.
+
+No product structure exists beneath the applicator tip.
+
+No material, extension, support, base, platform, connector, or additional component may appear below the applicator tip.
+
+The applicator tip defines the bottom-most boundary of the product.
+
+The outer silhouette of the product must remain identical to the second image.
+
+Do not generate any geometry outside the product silhouette shown in the second image.
+
+
+4. Product Understanding
+
+The product shown in the second image is a single complete handheld facial massage device.
+
+The device is one physically connected consumer product and must remain a single complete object.
+
+Do not separate, duplicate, recreate, extend, or independently generate any part of the device.
+
+The device uses gentle contact and movement to interact with the surface area.
+
+When the applicator tip contacts the surface, the surface may naturally respond with slight visual deformation consistent with physical contact.
+
+The device should appear physically connected to the surface rather than simply resting on it.
+
+The second image defines only the appearance of the device.
+
+5. Context Understanding
+
+Analyze the first image and identify how the original product is being used.
+
+The first image defines the composition, camera angle, framing, lighting, environment, pose, interaction, contact points, and physical relationships.
+
+Preserve the original action, contact, physical interaction, reflections, shadows, depth, and environmental lighting shown in the first image.
+
+The replacement product must occupy the exact same location and maintain the same physical interaction as the original product.
+
+The original product must not appear in the final image.
+
+The original product must be completely replaced by the product shown in the second image.
+
+Only the role, interaction, and physical relationship of the original product should be preserved.
+
+The original product itself must be removed.
+
+After replacement, only the new product should remain visible.
+
+No shape, color, structure, component, or visible element of the original product may remain in the final image.
+
+The original product and the replacement product must never appear together.
+
+Inherit the role, not the object.
+
+Remove the original product and replace it entirely with the product shown in the second image.

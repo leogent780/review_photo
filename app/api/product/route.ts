@@ -85,6 +85,7 @@ export async function DELETE(request: Request) {
       await unlink(path.join(PRODUCTS_DIR, product.filename)).catch(() => {});
     }
 
+    db.prepare('UPDATE generated_images SET product_image_id = NULL WHERE product_image_id = ?').run(id);
     db.prepare('DELETE FROM product_image_files WHERE product_id = ?').run(id);
     db.prepare('DELETE FROM product_images WHERE id = ?').run(id);
     return NextResponse.json({ success: true });

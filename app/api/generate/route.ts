@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { writeFile, readFile } from 'fs/promises';
+import { writeFile } from 'fs/promises';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import getDb from '@/lib/db';
 import { getPrompt } from '@/lib/prompts';
-import { generateImage } from '@/lib/fal';
+import { generateImage } from '@/lib/openai-gen';
 
 export async function POST(request: Request) {
   try {
@@ -26,64 +26,54 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'productId is required for type 2' }, { status: 400 });
     }
 
-    const refExt = referenceFile.name.split('.').pop() || 'jpg';
-    const refFilename = `${uuidv4()}.${refExt}`;
+    // Save reference image
+    const refExt = referenceFile.name.split('.').pop()?.toLowerCase() || 'jpg';
+    const safeExt = ['jpg', 'jpeg', 'png', 'webp'].includes(refExt) ? refExt : 'jpg';
+    const refFilename = `${uuidv4()}.${safeExt}`;
     const refPath = path.join(process.cwd(), 'uploads', 'references', refFilename);
     const refBytes = await referenceFile.arrayBuffer();
     await writeFile(refPath, Buffer.from(refBytes));
 
     const prompt = getPrompt(type);
-    const refBase64 = Buffer.from(refBytes).toString('base64');
-
-    let productImageBase64: string | undefined;
     let productImageIdNum: number | null = null;
 
     if (type === 2 && productId) {
       const db = getDb();
       const product = db.prepare('SELECT * FROM product_images WHERE id = ?').get(productId) as
-        | { path: string; id: number }
+        | { id: number }
         | undefined;
       if (!product) {
         return NextResponse.json({ error: 'Product image not found' }, { status: 404 });
       }
-      const productBytes = await readFile(product.path);
-      productImageBase64 = productBytes.toString('base64');
       productImageIdNum = product.id;
     }
 
-    const result = await generateImage({
-      referenceImageBase64: refBase64,
-      prompt,
-      productImageBase64,
-    });
+    const result = await generateImage({ referenceImagePath: refPath, prompt });
 
-    const outputFilename = result.outputUrl ? `${uuidv4()}.jpg` : '';
-    const db = getDb();
-
-    if (result.outputUrl && outputFilename) {
+    // Save output image
+    let outputFilename = '';
+    if (result.outputBase64) {
+      outputFilename = `${uuidv4()}.png`;
+      const outputPath = path.join(process.cwd(), 'uploads', 'generated', outputFilename);
+      await writeFile(outputPath, Buffer.from(result.outputBase64, 'base64'));
+    } else if (result.outputUrl) {
+      outputFilename = `${uuidv4()}.jpg`;
       const outputPath = path.join(process.cwd(), 'uploads', 'generated', outputFilename);
       const imgResp = await fetch(result.outputUrl);
       const imgBytes = await imgResp.arrayBuffer();
       await writeFile(outputPath, Buffer.from(imgBytes));
     }
 
+    const db = getDb();
     db.prepare(
       `INSERT INTO generated_images
        (type, reference_filename, output_filename, product_image_id, job_id, prompt, status)
        VALUES (?, ?, ?, ?, ?, ?, ?)`
-    ).run(
-      type,
-      refFilename,
-      outputFilename,
-      productImageIdNum,
-      result.jobId,
-      prompt,
-      result.status === 'completed' ? 'completed' : 'pending'
-    );
+    ).run(type, refFilename, outputFilename, productImageIdNum, result.jobId, prompt, 'completed');
 
     return NextResponse.json({
       jobId: result.jobId,
-      status: result.status,
+      status: 'completed',
       outputFilename: outputFilename || null,
     });
   } catch (error) {
@@ -115,7 +105,6 @@ export async function DELETE(request: Request) {
       | undefined;
 
     if (row) {
-      // Delete files
       const { unlink } = await import('fs/promises');
       const refPath = path.join(process.cwd(), 'uploads', 'references', row.reference_filename);
       const outPath = row.output_filename

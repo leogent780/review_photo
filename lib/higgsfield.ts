@@ -13,7 +13,7 @@ interface GenerateResult {
 }
 
 export async function generateImage(options: GenerateOptions): Promise<GenerateResult> {
-  const apiKey = process.env.HIGGSFIELD_API_KEY;
+  const apiKey = process.env.HIGGSFIELD_API_KEY?.replace(/^﻿/, '').trim();
   if (!apiKey) {
     throw new Error('HIGGSFIELD_API_KEY is not set');
   }
@@ -50,7 +50,7 @@ export async function generateImage(options: GenerateOptions): Promise<GenerateR
 }
 
 export async function getJobStatus(jobId: string): Promise<GenerateResult> {
-  const apiKey = process.env.HIGGSFIELD_API_KEY;
+  const apiKey = process.env.HIGGSFIELD_API_KEY?.replace(/^﻿/, '').trim();
   if (!apiKey) {
     throw new Error('HIGGSFIELD_API_KEY is not set');
   }

@@ -34,13 +34,13 @@ export async function generateImage(options: GenerateOptions): Promise<GenerateR
   const mimeType = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
   const dataUrl = `data:${mimeType};base64,${imageBytes.toString('base64')}`;
 
-  const result = await fal.subscribe('fal-ai/flux-pro/kontext', {
+  const result = await fal.subscribe('fal-ai/flux/dev/image-to-image', {
     input: {
       image_url: dataUrl,
       prompt: options.prompt,
-      guidance_scale: 2.5,
+      strength: 0.15,
       num_images: 1,
-      safety_tolerance: 5,
+      guidance_scale: 3.5,
     },
   }) as { data?: { images?: { url: string }[] }; requestId?: string };
 

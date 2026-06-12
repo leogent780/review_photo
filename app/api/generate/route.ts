@@ -4,7 +4,7 @@ import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import getDb from '@/lib/db';
 import { getPrompt } from '@/lib/prompts';
-import { generateImage } from '@/lib/fal';
+import { generateImage } from '@/lib/higgsfield';
 
 async function ensureUploadDirs() {
   const base = path.join(process.cwd(), 'uploads');
